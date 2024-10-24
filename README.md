@@ -21,17 +21,17 @@ Welcome to **ChipiBot**, a revolutionary service robot designed to assist waitst
 To get started with **ChipiBot**, follow these steps:
 
 1. **Clone the repository**:
-   \`\`\`bash
+   ```bash
    git clone https://github.com/yourusername/ChipiBot.git
-   \`\`\`
+   ```
 2. **Install dependencies**:
-   \`\`\`bash
+   ```bash
    flutter pub get
-   \`\`\`
+   ```
 3. **Run the app**:
-   \`\`\`bash
+   ```bash
    flutter run
-   \`\`\`
+   ```
 
 ### Tech Stack 💻
 - **Flutter**: Frontend framework.
@@ -60,17 +60,17 @@ Bienvenido a **ChipiBot**, un robot de servicio revolucionario diseñado para ay
 Para comenzar con **ChipiBot**, sigue estos pasos:
 
 1. **Clona el repositorio**:
-   \`\`\`bash
+   ```bash
    git clone https://github.com/yourusername/ChipiBot.git
-   \`\`\`
+   ```
 2. **Instala las dependencias**:
-   \`\`\`bash
+   ```bash
    flutter pub get
-   \`\`\`
+   ```
 3. **Ejecuta la app**:
-   \`\`\`bash
+   ```bash
    flutter run
-   \`\`\`
+   ```
 
 ### Stack Tecnológico 💻
 - **Flutter**: Framework de frontend.
