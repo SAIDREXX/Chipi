@@ -1,7 +1,7 @@
 
 # 🤖 ChipiBot - Your Friendly Robotic Waiter
 
-## English 🇬🇧
+## English
 
 Welcome to **ChipiBot**, a revolutionary service robot designed to assist waitstaff in restaurants! ChipiBot is a **voice-controlled waiter** that takes your food orders using **speech recognition** and **text-to-speech (TTS)** technologies, sending them directly to the kitchen. A human waiter will then bring the food to your table. This project is developed with **Flutter** and will be presented at **InnovaTec** competition. 🚀
 
@@ -22,7 +22,7 @@ To get started with **ChipiBot**, follow these steps:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/ChipiBot.git
+   git clone https://github.com/saidrexx/Chipi.git
    ```
 2. **Install dependencies**:
    ```bash
@@ -40,7 +40,7 @@ To get started with **ChipiBot**, follow these steps:
 
 ---
 
-## Español 🇪🇸
+## Español
 
 Bienvenido a **ChipiBot**, un robot de servicio revolucionario diseñado para ayudar al personal de restaurantes. ChipiBot es un **mesero controlado por voz** que toma tus órdenes de comida utilizando tecnologías de **reconocimiento de voz** y **texto a voz (TTS)**, enviándolas directamente a la cocina. Luego, un mesero humano te traerá la comida a la mesa. Este proyecto está desarrollado con **Flutter** y será presentado en la competencia **InnovaTec**. 🚀
 
