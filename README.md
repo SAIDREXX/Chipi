@@ -61,7 +61,7 @@ Para comenzar con **ChipiBot**, sigue estos pasos:
 
 1. **Clona el repositorio**:
    ```bash
-   git clone https://github.com/yourusername/ChipiBot.git
+   git clone https://github.com/saidrexx/ChipiBot.git
    ```
 2. **Instala las dependencias**:
    ```bash
