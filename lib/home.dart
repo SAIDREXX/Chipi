@@ -3,6 +3,7 @@ import 'package:chipibot/constants/colors.dart';
 import 'package:chipibot/constants/welcome_phrases.dart';
 import 'package:flutter/material.dart';
 import './utils/tts_stt_service.dart';
+import 'Bluetooth/bluetooth_connection.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,13 +13,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final BluetoothConnectionManager _bluetoothManager = BluetoothConnectionManager();
+  final String chipiBotAddress = "98:DA:60:03:A8:8C"; // LA DIRECCION MAC DEL MODULO HC-06
+
 
   @override
   void initState() {
     super.initState();
-    SpeechRecognitionService().startListening(phrases, responses)
+   // SpeechRecognitionService().startListening(phrases, responses);
+    /
+    _bluetoothManager.checkPermissions(); //verifica si tiene permisos de bluetooth si no lo tiene le paarecera la invitaticon de permitirlo
+    _bluetoothManager.connectToDevice(chipiBotAddress); //se sincroniza al modulo de bluetooth de HC-06 que tiene una direccion
   }
-
+  @override
+  void dispose() {
+    _bluetoothManager.disconnect();
+    super.dispose();
+  }
 
   void sayRandomPhrase() async {
     final random = Random();
@@ -45,7 +56,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     MainAxisAlignment.center, // Centra verticalmente
                 children: [
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      //se envia al modulo el dato 1
+                      _bluetoothManager.sendData("1"); // Enviar "1" al CHIPI-BOT
+                    },
                     style: ElevatedButton.styleFrom(
                       shape: const CircleBorder(),
                       backgroundColor: ColorConstants.redColor,

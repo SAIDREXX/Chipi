@@ -76,3 +76,30 @@ Para comenzar con **ChipiBot**, sigue estos pasos:
 - **Flutter**: Framework de frontend.
 - **API de reconocimiento de voz**: Para procesar comandos de voz.
 - **API de TTS**: Para convertir texto a voz.
+
+
+### Conexion de la libreria bluetooth
+   1. **Instala la dependencias **:
+   ```bash
+         Modulo de bluetooth
+     flutter pub add flutter_bluetooth_serial
+     Link-documentacion: https://pub.dev/packages/flutter_bluetooth_serial/install
+        Permisos de aplicaciones
+     flutter pub add permission_handler
+     Link-documentacion: https://pub.dev/packages/permission_handler
+  ```
+
+
+### ¿Cómo funciona? ⚙️
+1.- primero se tiene que configurar los xml de android para pedir los permisos y se pone que permisos va a pedir en android\app\src adentro hay tres carpetas y cada una tiene un xml y ahi se pone los permisos
+2.- se configura el grandle para evitar conflitos al hora de copilarlo en android\build.gradle
+
+de ahi ya se puede pedir permisos en y que funcione correctamente.
+
+### ¿Cómo funciona la transferencia de datos? ⚙️
+
+   La para detener el servomotor se programa en el arduino para que cuando reciba el dato numero 1 
+   se detenga entonces en la aplicacion movil se conecta  y se programa para sincronizar el modulo 
+   con el telefono con una direccion MAC  y poder enviar los datos en este caso el modulo de 
+   bleuetooth esta en modo de exclavo (solo va recibir informacion) al hora que el telefono envia 
+   el valor de "1" el modulo lo va recibir y va detener por 5 minutos.
