@@ -1,0 +1,368 @@
+{
+    "platillos": [
+        {
+            "nombre": "sandwich",
+            "ingredientes": [
+                "pan blanco o integral",
+                "mayonesa",
+                "lechuga",
+                "jitomate",
+                "jamón",
+                "queso americano"
+            ],
+            "precio": 32
+        },
+        {
+            "nombre": "sandwich verde",
+            "ingredientes": [
+                "pan brioche",
+                "queso crema",
+                "aguacate",
+                "espinacas",
+                "lechuga",
+                "pepino",
+                "jamón",
+                "queso panela"
+            ],
+            "precio": 55
+        },
+        {
+            "nombre": "sandwich dulce",
+            "ingredientes": [
+                "pan blanco o integral",
+                "crema de cacahuate",
+                "crema de avellana"
+            ],
+            "precio": 35
+        },
+        {
+            "nombre": "baguette",
+            "ingredientes": [
+                "pan de ajo o hierbas finas",
+                "lechuga",
+                "jitomate",
+                "pepino",
+                "jamón",
+                "queso americano",
+                "queso manchego",
+                "mayonesa",
+                "ranch"
+            ],
+            "precio": 55
+        },
+        {
+            "nombre": "torta de pierna",
+            "ingredientes": [
+                "lechuga",
+                "jitomate",
+                "cebolla",
+                "mayonesa",
+                "frijoles",
+                "pierna de cerdo"
+            ],
+            "salsas": [
+                "verde",
+                "roja",
+                "chipotle"
+            ],
+            "precio": 35
+        },
+        {
+            "nombre": "torta doble queso",
+            "ingredientes": [
+                "lechuga",
+                "jitomate",
+                "cebolla",
+                "mayonesa",
+                "frijoles",
+                "queso americano",
+                "queso de hebra"
+            ],
+            "salsas": [
+                "verde",
+                "roja",
+                "chipotle"
+            ],
+            "precio": 35
+        },
+        {
+            "nombre": "torta de jamón",
+            "ingredientes": [
+                "lechuga",
+                "jitomate",
+                "cebolla",
+                "mayonesa",
+                "frijoles",
+                "jamón"
+            ],
+            "salsas": [
+                "verde",
+                "roja",
+                "chipotle"
+            ],
+            "precio": 35
+        },
+        {
+            "nombre": "cuernito",
+            "ingredientes": [
+                "lechuga",
+                "jitomate",
+                "cebolla",
+                "mayonesa",
+                "jamón",
+                "queso americano",
+                "queso de hebra"
+            ],
+            "salsas": [
+                "verde",
+                "roja",
+                "chipotle"
+            ],
+            "precio": 40
+        },
+        {
+            "nombre": "ensalda de la casa",
+            "ingredientes": [
+                "pasta",
+                "lechuga",
+                "jitomate",
+                "cebolla",
+                "elote",
+                "queso panela",
+                "queso parmesano",
+                "ranch",
+                "proteina a elegir (pollo, atún, huevo)"
+            ],
+            "proteínas": [
+                "pechuga de pollo",
+                "huevo",
+                "atún"
+            ],
+            "precio": 80
+        },
+        {
+            "nombre": "ensalda clásica",
+            "ingredientes": [
+                "pasta",
+                "lechuga",
+                "jitomate",
+                "cebolla",
+                "proteina a elegir (pollo, atún, huevo)"
+            ],
+            "proteínas": [
+                "pechuga de pollo",
+                "huevo",
+                "atún"
+            ],
+            "precio": 70
+        },
+        {
+            "nombre": "dulce antojo",
+            "ingredientes": [
+                "espinacas",
+                "manzana",
+                "piña",
+                "arándanos",
+                "nuez"
+            ],
+            "precio": 40
+        },
+        {
+            "nombre": "ensalada especial",
+            "ingredientes": [
+                "lechuga",
+                "manzana",
+                "mango",
+                "pepino",
+                "miel",
+                "vinagreta",
+                "nuez"
+            ],
+            "precio": 55
+        },
+        {
+            "nombre": "ensalada de pera",
+            "ingredientes": [
+                "lechuga",
+                "arúgula",
+                "pera",
+                "nuez",
+                "queso de cabra",
+                "miel",
+                "vinagreta"
+            ],
+            "precio": 70
+        },
+        {
+            "nombre": "cóctel clásico",
+            "ingredientes": [
+                "melón",
+                "manzana",
+                "plátano",
+                "papaya",
+                "yogurt",
+                "granola"
+            ],
+            "precio": 35
+        },
+        {
+            "nombre": "cóctel especial",
+            "ingredientes": [
+                "frutas de temporada",
+                "yogurt",
+                "granola"
+            ],
+            "precio": 60
+        },
+        {
+            "nombre": "huevos al gusto",
+            "tipo": [
+                "a la mexicana",
+                "con jamón",
+                "con tocino",
+                "con chorizo",
+                "con longaniza",
+                "con espinacas"
+            ],
+            "complementos": [
+                "2 tortillas o tostadas"
+            ],
+            "precio": 45
+        },
+        {
+            "nombre": "chilaquiles",
+            "tipo": [
+                "rojos",
+                "verdes"
+            ],
+            "proteínas": [
+                "pollo",
+                "huevo"
+            ],
+            "complementos": [
+                "crema",
+                "queso",
+                "cebolla",
+                "todo"
+            ],
+            "precio": 55
+        },
+        {
+            "nombre": "sincronizadas",
+            "ingredientes": [
+                "2 tortillas de harina",
+                "queso de hebra",
+                "queso americano",
+                "jamón",
+                "aguacate"
+            ],
+            "precio": 40
+        },
+        {
+            "nombre": "omelette fit",
+            "ingredientes": [
+                "huevos",
+                "espinacas",
+                "champiñones",
+                "jitomate",
+                "queso panela"
+            ],
+            "precio": 60
+        },
+        {
+            "nombre": "omelette vegan",
+            "ingredientes": [
+                "huevos",
+                "zanahoria",
+                "calabacitas",
+                "queso de hebra"
+            ],
+            "precio": 60
+        }
+    ],
+    "bebidas": [
+        {
+            "nombre": "naranjada mineral",
+            "precio": 40
+        },
+        {
+            "nombre": "naranjada natural",
+            "precio": 38
+        },
+        {
+            "nombre": "limonada natural",
+            "precio": 38
+        },
+        {
+            "nombre": "limonada mineral",
+            "precio": 40
+        },
+        {
+            "nombre": "fresada",
+            "precio": 45
+        },
+        {
+            "nombre": "agua del día",
+            "precio": 25
+        },
+        {
+            "nombre": "coca cola",
+            "precio": 15
+        },
+        {
+            "nombre": "malteada de vainilla",
+            "precio": 50
+        },
+        {
+            "nombre": "chocomilk",
+            "size": [
+                "chico",
+                "mediano",
+                "grande"
+            ],
+            "precio": 32
+        },
+        {
+            "nombre": "café",
+            "tipo": [
+                "americano",
+                "espresso",
+                "capuchino",
+                "latte"
+            ],
+            "complementos": [
+                "leche",
+                "azúcar",
+                "canela"
+            ],
+            "size": [
+                "chico",
+                "mediano",
+                "grande"
+            ],
+            "precio": 30
+        }
+    ],
+    "postres": [
+        {
+            "nombre": "waffle",
+            "toppings": [
+                "crema de avellana",
+                "cajeta",
+                "lechera",
+                "mermelada",
+                "crema batida",
+                "crema de cacahuate",
+                "queso crema",
+                "miel",
+                "chocolate",
+                "nuez",
+                "oreo",
+                "fresa",
+                "plátano",
+                "frutas de temporada"
+            ],
+            "precio": 35
+        }
+    ]
+}

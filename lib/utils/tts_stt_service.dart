@@ -13,18 +13,16 @@ class SpeechRecognitionService {
         String recognizedText = result.recognizedWords;
         for (int i = 0; i < phrases.length; i++) {
           if (recognizedText.contains(phrases[i])) {
-            _speak(responses[i]);
+            speak(responses[i]);
             break;
           }
         }
       });
-    } else {
-      print("The user has denied the use of speech recognition.");
-    }
+    } else {}
   }
 
-  Future<void> _speak(String text) async {
-    await _tts.setLanguage("es-ES");
+  Future<void> speak(String text) async {
+    await _tts.setLanguage("es-MX");
     await _tts.setPitch(1.0);
     await _tts.speak(text);
   }
