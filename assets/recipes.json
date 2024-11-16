@@ -10,6 +10,7 @@
                 "jamón",
                 "queso americano"
             ],
+            "imagen": "assets/sandwich.jpeg",
             "precio": 32
         },
         {
@@ -24,6 +25,7 @@
                 "jamón",
                 "queso panela"
             ],
+            "imagen": "assets/sandwich-verde.jpeg",
             "precio": 55
         },
         {
@@ -33,12 +35,13 @@
                 "crema de cacahuate",
                 "crema de avellana"
             ],
+            "imagen": "assets/sandwich-dulce.jpg",
             "precio": 35
         },
         {
             "nombre": "baguette",
             "ingredientes": [
-                "pan de ajo o hierbas finas",
+                "pan de ajo",
                 "lechuga",
                 "jitomate",
                 "pepino",
@@ -48,6 +51,7 @@
                 "mayonesa",
                 "ranch"
             ],
+            "imagen": "assets/baguette.jpg",
             "precio": 55
         },
         {
@@ -65,6 +69,7 @@
                 "roja",
                 "chipotle"
             ],
+            "imagen": "assets/torta-pierna.jpg",
             "precio": 35
         },
         {
@@ -83,6 +88,7 @@
                 "roja",
                 "chipotle"
             ],
+            "imagen": "assets/torta-queso-doble.jpg",
             "precio": 35
         },
         {
@@ -100,16 +106,16 @@
                 "roja",
                 "chipotle"
             ],
+            "imagen": "assets/torta-jamón.jpg",
             "precio": 35
         },
         {
-            "nombre": "cuernito",
+            "nombre": "cuerno de jamón",
             "ingredientes": [
                 "lechuga",
                 "jitomate",
                 "cebolla",
                 "mayonesa",
-                "jamón",
                 "queso americano",
                 "queso de hebra"
             ],
@@ -118,10 +124,11 @@
                 "roja",
                 "chipotle"
             ],
+            "imagen": "assets/cuerno-jamón.jpeg",
             "precio": 40
         },
         {
-            "nombre": "ensalda de la casa",
+            "nombre": "ensalada de la casa",
             "ingredientes": [
                 "pasta",
                 "lechuga",
@@ -131,41 +138,32 @@
                 "queso panela",
                 "queso parmesano",
                 "ranch",
-                "proteina a elegir (pollo, atún, huevo)"
+                "pollo"
             ],
             "proteínas": [
                 "pechuga de pollo",
                 "huevo",
                 "atún"
             ],
+            "imagen": "assets/ensalada-casa.jpeg",
             "precio": 80
         },
         {
-            "nombre": "ensalda clásica",
+            "nombre": "ensalada clásica",
             "ingredientes": [
                 "pasta",
                 "lechuga",
                 "jitomate",
                 "cebolla",
-                "proteina a elegir (pollo, atún, huevo)"
+                "pollo"
             ],
             "proteínas": [
                 "pechuga de pollo",
                 "huevo",
                 "atún"
             ],
+            "imagen": "assets/ensalada-clásica.jpg",
             "precio": 70
-        },
-        {
-            "nombre": "dulce antojo",
-            "ingredientes": [
-                "espinacas",
-                "manzana",
-                "piña",
-                "arándanos",
-                "nuez"
-            ],
-            "precio": 40
         },
         {
             "nombre": "ensalada especial",
@@ -178,6 +176,7 @@
                 "vinagreta",
                 "nuez"
             ],
+            "imagen": "assets/ensalada-especial.jpg",
             "precio": 55
         },
         {
@@ -185,12 +184,12 @@
             "ingredientes": [
                 "lechuga",
                 "arúgula",
-                "pera",
                 "nuez",
                 "queso de cabra",
                 "miel",
                 "vinagreta"
             ],
+            "imagen": "assets/ensalada-pera.jpg",
             "precio": 70
         },
         {
@@ -203,6 +202,7 @@
                 "yogurt",
                 "granola"
             ],
+            "imagen": "assets/coctel-frutas.jpeg",
             "precio": 35
         },
         {
@@ -212,10 +212,11 @@
                 "yogurt",
                 "granola"
             ],
+            "imagen": "assets/coctel-especial.jpg",
             "precio": 60
         },
         {
-            "nombre": "huevos al gusto",
+            "nombre": "huevos",
             "tipo": [
                 "a la mexicana",
                 "con jamón",
@@ -227,6 +228,7 @@
             "complementos": [
                 "2 tortillas o tostadas"
             ],
+            "imagen": "assets/huevos-mexicana.jpg",
             "precio": 45
         },
         {
@@ -245,6 +247,7 @@
                 "cebolla",
                 "todo"
             ],
+            "imagen": "assets/chilaquiles.jpeg",
             "precio": 55
         },
         {
@@ -256,61 +259,49 @@
                 "jamón",
                 "aguacate"
             ],
+            "imagen": "assets/sincronizadas.jpg",
             "precio": 40
-        },
-        {
-            "nombre": "omelette fit",
-            "ingredientes": [
-                "huevos",
-                "espinacas",
-                "champiñones",
-                "jitomate",
-                "queso panela"
-            ],
-            "precio": 60
-        },
-        {
-            "nombre": "omelette vegan",
-            "ingredientes": [
-                "huevos",
-                "zanahoria",
-                "calabacitas",
-                "queso de hebra"
-            ],
-            "precio": 60
         }
     ],
     "bebidas": [
         {
             "nombre": "naranjada mineral",
+            "imagen": "assets/naranjada-mineral.jpg",
             "precio": 40
         },
         {
             "nombre": "naranjada natural",
+            "imagen": "assets/naranjada-natural.jpeg",
             "precio": 38
         },
         {
             "nombre": "limonada natural",
+            "imagen": "assets/limonada-natural.jpg",
             "precio": 38
         },
         {
             "nombre": "limonada mineral",
+            "imagen": "assets/limonada-mineral.jpeg",
             "precio": 40
         },
         {
             "nombre": "fresada",
+            "imagen": "assets/fresada.jpg",
             "precio": 45
         },
         {
             "nombre": "agua del día",
+            "imagen": "assets/agua-dia.jpg",
             "precio": 25
         },
         {
             "nombre": "coca cola",
+            "imagen": "assets/coca-cola.jpg",
             "precio": 15
         },
         {
             "nombre": "malteada de vainilla",
+            "imagen": "assets/malteada-vainilla.jpg",
             "precio": 50
         },
         {
@@ -320,6 +311,7 @@
                 "mediano",
                 "grande"
             ],
+            "imagen": "assets/chocomilk.jpg",
             "precio": 32
         },
         {
@@ -340,6 +332,7 @@
                 "mediano",
                 "grande"
             ],
+            "imagen": "assets/cafe.jpeg",
             "precio": 30
         }
     ],
@@ -362,7 +355,20 @@
                 "plátano",
                 "frutas de temporada"
             ],
+            "imagen": "assets/waffle.jpg",
             "precio": 35
+        },
+        {
+            "nombre": "dulce antojo",
+            "ingredientes": [
+                "espinacas",
+                "manzana",
+                "piña",
+                "arándanos",
+                "nuez"
+            ],
+            "imagen": "assets/dulce-antojo.jpg",
+            "precio": 40
         }
     ]
 }

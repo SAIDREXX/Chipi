@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:chipibot/constants/colors.dart';
 import 'package:chipibot/constants/welcome_phrases.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import './utils/tts_stt_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -17,10 +19,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late stt.SpeechToText _speech; // Speech-to-Text para reconocimiento de voz
+  final FlutterTts _tts = FlutterTts();
   bool _isListening = false; // Estado de escucha
   String _command = ""; // Texto reconocido
   Map<String, List<Map<String, dynamic>>> menu = {};
   int orderNum = 0;
+
   @override
   void initState() {
     super.initState();
@@ -32,21 +36,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     super.dispose();
+    _tts.stop();
+    _speech.stop();
   }
 
-  Future<void> sayRandomPhrase() async {
-    final random = Random();
-    final welcomePhrase = phrases[random.nextInt(phrases.length)];
-    await SpeechRecognitionService().speak(welcomePhrase);
+  void _setupTTS() {
+    _tts.setCompletionHandler(() {
+      _startConfirmationListening();
+    });
   }
-
-  /* Future<void> sendEmail(String bodyContent) async {
-    orderNum++;
-    final Email email = Email(
-        subject: "Orden #$orderNum",
-        body: bodyContent,
-        recipients: ['saidrexxdemher@gmail.com']);
-  } */
 
   // Inicia el reconocimiento de voz
   Future<void> _startListening() async {
@@ -86,9 +84,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _processConfirmationCommand(String command) {
     if (command.contains("sí") || command.contains("correcto")) {
-      SpeechRecognitionService().speak("¡Pedido confirmado!");
+      _tts.speak("¡Pedido confirmado! ¡Buen provecho!");
+      _tts.setCompletionHandler(() async {
+        _tts.stop();
+      });
     } else if (command.contains("no") || command.contains("incorrecto")) {
-      SpeechRecognitionService().speak("¡Vamos a intentarlo de nuevo!");
+      _tts.speak("¡Pedido cancelado! Inténtalo de nuevo.");
     }
   }
 
@@ -231,7 +232,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // Analizar artículos según género y terminar con 'a'
       String articuloPara(String item) {
-        return item.endsWith("a") ? "una" : "un";
+        if (item.endsWith("s")) {
+          return item.split(" ")[0].endsWith("as") ? "unas" : "unos";
+        } else {
+          return item.split(" ")[0].endsWith("a") ? "una" : "un";
+        }
       }
 
       // Confirmación de platillo
@@ -242,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // Confirmación del tipo de platillo
       if (tipoPlatillo != null && tipoPlatillo.isNotEmpty) {
-        elementosConfirmacion.add("de tipo $tipoPlatillo");
+        elementosConfirmacion.add(tipoPlatillo);
       }
 
       // Confirmación de bebida
@@ -298,12 +303,10 @@ class _HomeScreenState extends State<HomeScreen> {
           "¿Es correcto el pedido de " + elementosConfirmacion.join(", ") + "?";
 
       if (_speech.isNotListening) {
-        SpeechRecognitionService().speak(mensajeConfirmacion);
-      }
-      if (_speech.isNotListening) {
-        _startConfirmationListening();
-        await _speech.stop();
-        _startConfirmationListening();
+        Timer(const Duration(seconds: 1), () async {
+          await _tts.speak(mensajeConfirmacion);
+          _setupTTS();
+        });
       }
     });
   }
@@ -324,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      _showAddDialog();
+                      _showFoodDialog(context);
                     },
                     style: ElevatedButton.styleFrom(
                       shape: const CircleBorder(),
@@ -339,7 +342,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 100),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _showDrinksDialog(context);
+                    },
                     style: ElevatedButton.styleFrom(
                       shape: const CircleBorder(),
                       backgroundColor: ColorConstants.blueColor,
@@ -364,7 +369,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton(
-                    onPressed: () {}, // Puedes añadir más funciones aquí
+                    onPressed: () {
+                      _showDessertDialog(context);
+                    }, // Puedes añadir más funciones aquí
                     style: ElevatedButton.styleFrom(
                       shape: const CircleBorder(),
                       backgroundColor: ColorConstants.pinkColor,
@@ -399,215 +406,276 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showAddDialog() {
+  void _showFoodDialog(BuildContext context) {
+    Future<Map<String, dynamic>> cargarJson(BuildContext context) async {
+      final String response = await DefaultAssetBundle.of(context)
+          .loadString('assets/recipes.json');
+      return jsonDecode(response);
+    }
+
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: ColorConstants.redColor,
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                SizedBox(
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(9999), // Radio de los bordes
-                        child: Image.asset(
-                          'assets/sandwich.jpeg',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                        ),
+      builder: (BuildContext context) {
+        return FutureBuilder<Map<String, dynamic>>(
+          future: cargarJson(context),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const AlertDialog(
+                content: SizedBox(
+                  height: 100,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            } else if (snapshot.hasError) {
+              return const AlertDialog(
+                content: Text("Error al cargar los datos."),
+              );
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const AlertDialog(
+                content: Text("No hay platillos disponibles."),
+              );
+            }
+
+            final platillos = snapshot.data!['platillos'] as List<dynamic>;
+
+            return AlertDialog(
+              backgroundColor: ColorConstants.redColor,
+              title: const Text(
+                "Platillos",
+                style: TextStyle(color: Colors.white),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 300, // Altura ajustada para que sea scrollable
+                child: ListView.builder(
+                  itemCount: platillos.length,
+                  itemBuilder: (context, index) {
+                    final platillo = platillos[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(9999),
+                            child: Image.asset(
+                              platillo['imagen'],
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              platillo['nombre'],
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            "\$${platillo['precio']}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showDrinksDialog(BuildContext context) {
+    Future<Map<String, dynamic>> cargarJson(BuildContext context) async {
+      final String response = await DefaultAssetBundle.of(context)
+          .loadString('assets/recipes.json');
+      return jsonDecode(response);
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return FutureBuilder<Map<String, dynamic>>(
+          future: cargarJson(context),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const AlertDialog(
+                content: SizedBox(
+                  height: 100,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            } else if (snapshot.hasError) {
+              return const AlertDialog(
+                content: Text("Error al cargar los datos."),
+              );
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const AlertDialog(
+                content: Text("No hay bebidas disponibles."),
+              );
+            }
+
+            final bebidas = snapshot.data!['bebidas'] as List<dynamic>;
+
+            return AlertDialog(
+              backgroundColor: ColorConstants.blueColor,
+              title: const Text(
+                "Bebidas",
+                style: TextStyle(color: Colors.white),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 300, // Altura ajustada para que sea scrollable
+                child: ListView.builder(
+                  itemCount: bebidas.length,
+                  itemBuilder: (context, index) {
+                    final bebida = bebidas[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(9999),
+                            child: Image.asset(
+                              bebida['imagen'],
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              bebida['nombre'],
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            "\$${bebida['precio']}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
-                      const Text(
-                        "Sandwich",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showDessertDialog(BuildContext context) {
+    Future<Map<String, dynamic>> cargarJson(BuildContext context) async {
+      final String response = await DefaultAssetBundle.of(context)
+          .loadString('assets/recipes.json');
+      return jsonDecode(response);
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return FutureBuilder<Map<String, dynamic>>(
+          future: cargarJson(context),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const AlertDialog(
+                content: SizedBox(
+                  height: 100,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            } else if (snapshot.hasError) {
+              return const AlertDialog(
+                content: Text("Error al cargar los datos."),
+              );
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const AlertDialog(
+                content: Text("No hay postres disponibles."),
+              );
+            }
+
+            final postres = snapshot.data!['postres'] as List<dynamic>;
+
+            return AlertDialog(
+              backgroundColor: ColorConstants.pinkColor,
+              title: const Text(
+                "Postres",
+                style: TextStyle(color: Colors.white),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 300, // Altura ajustada para que sea scrollable
+                child: ListView.builder(
+                  itemCount: postres.length,
+                  itemBuilder: (context, index) {
+                    final postre = postres[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(9999),
+                            child: Image.asset(
+                              postre['imagen'],
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              postre['nombre'],
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            "\$${postre['precio']}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
-                      ),
-                      const Text(
-                        "35",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    ],
+                    );
+                  },
+                ),
+              ),
+              /* actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text(
+                    "Cerrar",
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(9999), // Radio de los bordes
-                        child: Image.asset(
-                          'assets/sandwich-verde.jpeg',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
-                      ),
-                      const Text(
-                        "Sandwich Verde",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
-                      ),
-                      const Text(
-                        "35",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(9999), // Radio de los bordes
-                        child: Image.asset(
-                          'assets/sandwich-dulce.jpg',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
-                      ),
-                      const Text(
-                        "Sandwich Dulce",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
-                      ),
-                      const Text(
-                        "35",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(9999), // Radio de los bordes
-                        child: Image.asset(
-                          'assets/baguette.jpg',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
-                      ),
-                      const Text(
-                        "Baguette",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
-                      ),
-                      const Text(
-                        "35",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(9999), // Radio de los bordes
-                        child: Image.asset(
-                          'assets/torta-queso-doble.jpg',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
-                      ),
-                      const Text(
-                        "Torta Doble Queso",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
-                      ),
-                      const Text(
-                        "35",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(9999), // Radio de los bordes
-                        child: Image.asset(
-                          'assets/torta-jamón.jpg',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
-                      ),
-                      const Text(
-                        "Torta de Jamón",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(),
-                      ),
-                      const Text(
-                        "35",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ], */
+            );
+          },
         );
       },
     );
