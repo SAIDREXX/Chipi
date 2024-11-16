@@ -1,13 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 import 'package:chipibot/constants/colors.dart';
-import 'package:chipibot/constants/welcome_phrases.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import './utils/tts_stt_service.dart';
+import 'package:http/http.dart' as http;
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -30,6 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     WakelockPlus.enable(); // Mantener la pantalla encendida
     _speech = stt.SpeechToText(); // Inicialización del SpeechToText
+    _tts.setLanguage('es-MX'); // Establecer idioma español
+
     _loadMenu();
   }
 
@@ -40,10 +39,46 @@ class _HomeScreenState extends State<HomeScreen> {
     _speech.stop();
   }
 
-  void _setupTTS() {
+  void _setupTTS(List<int> precioOrden, List<dynamic> elementosOrden) {
     _tts.setCompletionHandler(() {
-      _startConfirmationListening();
+      _startConfirmationListening(precioOrden, elementosOrden);
     });
+  }
+
+  Future<void> enviarCorreo({
+    required String nombre,
+    required String email,
+    required String mensaje,
+  }) async {
+    const serviceId = 'service_xxw6ppg'; // Reemplaza con tu Service ID
+    const templateId = 'template_h7gwr4e'; // Reemplaza con tu Template ID
+    const publicKey = 'pYwocbx0uRr88L-Ri'; // Reemplaza con tu Public Key
+
+    final url = Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'origin': 'http://localhost',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'service_id': serviceId,
+        'template_id': templateId,
+        'user_id': publicKey,
+        'template_params': {
+          'user_name': nombre,
+          'user_email': email,
+          'user_message': mensaje,
+        },
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("Correo enviado exitosamente");
+    } else {
+      print("Error al enviar correo: ${response.body}");
+    }
   }
 
   // Inicia el reconocimiento de voz
@@ -63,7 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _startConfirmationListening() async {
+  Future<void> _startConfirmationListening(
+      List<int> precioOrden, List<dynamic> elementosOrden) async {
     if (!_isListening) {
       bool available = await _speech.initialize();
       if (available) {
@@ -73,7 +109,8 @@ class _HomeScreenState extends State<HomeScreen> {
             setState(
               () {
                 _command = result.recognizedWords;
-                _processConfirmationCommand(_command);
+                _processConfirmationCommand(
+                    precioOrden, _command, elementosOrden);
               },
             );
           },
@@ -82,11 +119,35 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _processConfirmationCommand(String command) {
+  void _processConfirmationCommand(
+      List<int> precioOrden, String command, List<dynamic> elementosOrden) {
+    int totalOrden = precioOrden.fold(0, (a, b) => a + b);
     if (command.contains("sí") || command.contains("correcto")) {
       _tts.speak("¡Pedido confirmado! ¡Buen provecho!");
+
       _tts.setCompletionHandler(() async {
         _tts.stop();
+        enviarCorreo(
+          nombre: "Encargados de Cocina",
+          email: "cocina@example.com",
+          mensaje: """
+          ¡Hola equipo de cocina!
+
+          Han recibido una nueva orden para preparar. A continuación, los detalles:
+
+          Detalles de la Orden:
+          ${elementosOrden.join("\n- ")}
+
+          Total de la Orden: $totalOrden MXN
+
+          Por favor, preparen esta orden lo más pronto posible y confirmen cuando esté lista.
+
+          Gracias por su dedicación.
+
+          Saludos,
+          ChipiBot
+          """,
+        );
       });
     } else if (command.contains("no") || command.contains("incorrecto")) {
       _tts.speak("¡Pedido cancelado! Inténtalo de nuevo.");
@@ -118,12 +179,15 @@ class _HomeScreenState extends State<HomeScreen> {
     List<String> complementosIncluidos = [];
     List<String> complementosExcluidos = [];
     List<String> toppingsSeleccionados = [];
+    List<int> precioOrden = [];
+    List<dynamic> elementosOrden = [];
 
     // Buscar en cada categoría
     if (menu['platillos'] != null) {
       for (var platillo in menu['platillos']!) {
         if (command.contains(platillo['nombre'])) {
           platilloSeleccionado = platillo['nombre'];
+          precioOrden.add(platillo['precio']);
 
           // Procesar salsas
           if (platillo['salsas'] != null) {
@@ -174,6 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
       for (var bebida in menu['bebidas']!) {
         if (command.contains(bebida['nombre'])) {
           bebidaSeleccionada = bebida['nombre'];
+          precioOrden.add(bebida['precio']);
 
           // Procesar tipo de bebida
           if (bebida['tipo'] != null) {
@@ -212,6 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
       for (var postre in menu['postres']!) {
         if (command.contains(postre['nombre'])) {
           postreSeleccionado = postre['nombre'];
+          precioOrden.add(postre['precio']);
 
           // Procesar toppings del postre
           if (postre['toppings'] != null) {
@@ -243,69 +309,77 @@ class _HomeScreenState extends State<HomeScreen> {
       if (platilloSeleccionado != null && platilloSeleccionado.isNotEmpty) {
         elementosConfirmacion
             .add("${articuloPara(platilloSeleccionado)} $platilloSeleccionado");
+        elementosOrden.add(platilloSeleccionado);
       }
-
       // Confirmación del tipo de platillo
       if (tipoPlatillo != null && tipoPlatillo.isNotEmpty) {
         elementosConfirmacion.add(tipoPlatillo);
+        elementosOrden.add(tipoPlatillo);
+      }
+      // Confirmación de salsa
+      if (salsaSeleccionada != null && salsaSeleccionada.isNotEmpty) {
+        elementosConfirmacion.add("con salsa $salsaSeleccionada");
+        elementosOrden.add("con salsa $salsaSeleccionada");
       }
 
+      // Confirmación de complementos incluidos
+      if (complementosIncluidos.isNotEmpty) {
+        elementosConfirmacion.add("con ${complementosIncluidos.join(", ")}");
+        elementosOrden.add("con ${complementosIncluidos.join(", ")}");
+      }
+
+      // Confirmación de complementos excluidos
+      if (complementosExcluidos.isNotEmpty) {
+        elementosConfirmacion.add("sin ${complementosExcluidos.join(", ni ")}");
+        elementosOrden.add("sin ${complementosExcluidos.join(", ni ")}");
+      }
+
+      // Confirmación de proteína
+      if (proteinaSeleccionada != null && proteinaSeleccionada.isNotEmpty) {
+        elementosConfirmacion.add("con proteína de $proteinaSeleccionada");
+        elementosOrden.add("con proteína de $proteinaSeleccionada");
+      }
       // Confirmación de bebida
       if (bebidaSeleccionada != null && bebidaSeleccionada.isNotEmpty) {
         elementosConfirmacion
             .add("${articuloPara(bebidaSeleccionada)} $bebidaSeleccionada");
+        elementosOrden.add(bebidaSeleccionada);
+      }
+      // Confirmación de tipo de bebida
+      if (tipoSeleccionado != null && tipoSeleccionado.isNotEmpty) {
+        elementosConfirmacion.add("de tipo $tipoSeleccionado");
+        elementosOrden.add("de tipo $tipoSeleccionado");
+      }
+
+      // Confirmación del tamaño de la bebida
+      if (tamanioSeleccionado != null && tamanioSeleccionado.isNotEmpty) {
+        elementosConfirmacion.add("en tamaño $tamanioSeleccionado");
+        elementosOrden.add("en tamaño $tamanioSeleccionado");
       }
 
       // Confirmación de postre
       if (postreSeleccionado != null && postreSeleccionado.isNotEmpty) {
         elementosConfirmacion
             .add("${articuloPara(postreSeleccionado)} $postreSeleccionado");
-      }
-
-      // Confirmación de salsa
-      if (salsaSeleccionada != null && salsaSeleccionada.isNotEmpty) {
-        elementosConfirmacion.add("con salsa $salsaSeleccionada");
-      }
-
-      // Confirmación de tipo de bebida
-      if (tipoSeleccionado != null && tipoSeleccionado.isNotEmpty) {
-        elementosConfirmacion.add("de tipo $tipoSeleccionado");
-      }
-
-      // Confirmación de proteína
-      if (proteinaSeleccionada != null && proteinaSeleccionada.isNotEmpty) {
-        elementosConfirmacion.add("con proteína de $proteinaSeleccionada");
-      }
-
-      // Confirmación del tamaño de la bebida
-      if (tamanioSeleccionado != null && tamanioSeleccionado.isNotEmpty) {
-        elementosConfirmacion.add("en tamaño $tamanioSeleccionado");
-      }
-
-      // Confirmación de complementos incluidos
-      if (complementosIncluidos.isNotEmpty) {
-        elementosConfirmacion.add("con ${complementosIncluidos.join(", ")}");
-      }
-
-      // Confirmación de complementos excluidos
-      if (complementosExcluidos.isNotEmpty) {
-        elementosConfirmacion.add("sin ${complementosExcluidos.join(", ni ")}");
+        elementosOrden.add(postreSeleccionado);
       }
 
       // Confirmación de toppings seleccionados
       if (toppingsSeleccionados.isNotEmpty) {
         elementosConfirmacion
             .add("con toppings de ${toppingsSeleccionados.join(", ")}");
+        elementosOrden
+            .add("con toppings de ${toppingsSeleccionados.join(", ")}");
       }
 
       // Construir el mensaje final de confirmación
       String mensajeConfirmacion =
-          "¿Es correcto el pedido de " + elementosConfirmacion.join(", ") + "?";
+          "¿Es correcto el pedido de ${elementosConfirmacion.join(", ")}?";
 
       if (_speech.isNotListening) {
         Timer(const Duration(seconds: 1), () async {
           await _tts.speak(mensajeConfirmacion);
-          _setupTTS();
+          _setupTTS(precioOrden, elementosOrden);
         });
       }
     });
