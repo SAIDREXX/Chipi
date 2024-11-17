@@ -1,44 +1,6 @@
 {
     "platillos": [
         {
-            "nombre": "sandwich",
-            "ingredientes": [
-                "pan blanco o integral",
-                "mayonesa",
-                "lechuga",
-                "jitomate",
-                "jamón",
-                "queso americano"
-            ],
-            "imagen": "assets/sandwich.jpeg",
-            "precio": 32
-        },
-        {
-            "nombre": "sandwich verde",
-            "ingredientes": [
-                "pan brioche",
-                "queso crema",
-                "aguacate",
-                "espinacas",
-                "lechuga",
-                "pepino",
-                "jamón",
-                "queso panela"
-            ],
-            "imagen": "assets/sandwich-verde.jpeg",
-            "precio": 55
-        },
-        {
-            "nombre": "sandwich dulce",
-            "ingredientes": [
-                "pan blanco o integral",
-                "crema de cacahuate",
-                "crema de avellana"
-            ],
-            "imagen": "assets/sandwich-dulce.jpg",
-            "precio": 35
-        },
-        {
             "nombre": "baguette",
             "ingredientes": [
                 "pan de ajo",
@@ -295,30 +257,14 @@
             "precio": 25
         },
         {
-            "nombre": "coca cola",
-            "imagen": "assets/coca-cola.jpg",
-            "precio": 15
-        },
-        {
             "nombre": "malteada de vainilla",
             "imagen": "assets/malteada-vainilla.jpg",
             "precio": 50
         },
         {
-            "nombre": "chocomilk",
-            "size": [
-                "chico",
-                "mediano",
-                "grande"
-            ],
-            "imagen": "assets/chocomilk.jpg",
-            "precio": 32
-        },
-        {
             "nombre": "café",
             "tipo": [
                 "americano",
-                "espresso",
                 "capuchino",
                 "latte"
             ],
@@ -338,7 +284,7 @@
     ],
     "postres": [
         {
-            "nombre": "waffle",
+            "nombre": "crepa",
             "toppings": [
                 "crema de avellana",
                 "cajeta",

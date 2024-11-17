@@ -2,47 +2,48 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:convert';
 
-//Clase de conexion con el modulo de HC-06
 class BluetoothConnectionManager {
-  BluetoothConnection? connection;
-  //se verifica si se ha consedido los permisos de bluetooth de la libreria de permission_handler
+  BluetoothConnection? _connection;
+
   Future<void> checkPermissions() async {
-    if (await Permission.bluetoothScan.request().isGranted) {
-      if (await Permission.bluetoothConnect.request().isGranted) {
-        print("Bluetooth permisos concedido");
-      } else {
+    final bluetoothScanStatus = await Permission.bluetoothScan.request();
+    final bluetoothConnectStatus = await Permission.bluetoothConnect.request();
+
+    if (bluetoothScanStatus.isGranted && bluetoothConnectStatus.isGranted) {
+      print("Bluetooth permisos concedido");
+    } else {
+      if (!bluetoothScanStatus.isGranted) {
+        print("Bluetooth scan denegado.");
+      }
+      if (!bluetoothConnectStatus.isGranted) {
         print("Bluetooth conexion denegado");
       }
-    } else {
-      print("Bluetooth scan onexion denegado.");
     }
   }
-  //si se conecta al dispositivo HC-06
+
   Future<void> connectToDevice(String address) async {
     try {
-      connection = await BluetoothConnection.toAddress(address);
-      print("conectado to CHIPI-BOT at $address");
-
-
-
+      _connection = await BluetoothConnection.toAddress(address);
+      print("Conectado a CHIPI-BOT en $address");
     } catch (exception) {
-      print("Could not connect: $exception");
+      print("No se pudo conectar: $exception");
     }
   }
-  //se envia los datos a modulo de bluetooth
+
   void sendData(String data) {
-    if (connection != null) {
-      connection!.output.add(utf8.encode(data + "\r\n"));
-      print("Datos a: $data");
+    if (_connection != null) {
+      _connection!.output.add(utf8.encode(data + "\r\n"));
+      print("Datos enviados: $data");
     } else {
-      print("no conectado.");
+      print("No conectado.");
     }
   }
-//desconexion del modulo de bluetooth
+
   void disconnect() {
-    if (connection != null) {
-      connection!.dispose();
-      print("Desconeccion de CHIPI-BOT.");
+    if (_connection != null) {
+      _connection!.dispose();
+      _connection = null;
+      print("Desconexión de CHIPI-BOT.");
     }
   }
 }
