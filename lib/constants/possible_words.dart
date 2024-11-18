@@ -1,0 +1,16 @@
+List<String> posiblesPalabras = [
+  "qué",
+  "cuales",
+  "cuáles",
+  "dime",
+  "muéstrame",
+  "muestra",
+  "explícame",
+  "enséñame",
+  "cómo",
+  "tiene",
+  "incluye",
+  "contiene",
+  "lleva",
+  "cuánto",
+];

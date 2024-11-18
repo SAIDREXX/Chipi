@@ -8,7 +8,6 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:http/http.dart' as http;
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -32,6 +31,12 @@ class _HomeScreenState extends State<HomeScreen> {
   String _command = ""; // Texto reconocido
   Map<String, List<Map<String, dynamic>>> menu = {};
   int orderNum = 0;
+  List<int> precioOrdenGlobal = [];
+  Map<String, dynamic> ordenFinalGlobal = {
+    "platillos": [],
+    "bebidas": [],
+    "postres": [],
+  };
 
   @override
   void initState() {
@@ -52,9 +57,9 @@ class _HomeScreenState extends State<HomeScreen> {
     _bluetoothManager.disconnect();
   }
 
-  void _setupTTS(Map<String, dynamic> ordenFinal) {
+  void _setupTTS(Map<String, dynamic> ordenFinal, List<int> precioOrden) {
     _tts.setCompletionHandler(() {
-      _startConfirmationListening(ordenFinal);
+      _startConfirmationListening(ordenFinal, precioOrden);
     });
   }
 
@@ -100,31 +105,32 @@ class _HomeScreenState extends State<HomeScreen> {
       bool available = await _speech.initialize();
       if (available) {
         _speech.listen(
-            localeId: 'es_MX', // Idioma español
-            onResult: (result) {
-              setState(() {
-                _command = result.recognizedWords;
-              });
-
-              if (_command.contains("cancelar") ||
-                  _command.contains("salir") ||
-                  _command.contains("cerrar")) {
-                _speech.stop();
-                _tts.speak(
-                    "Entendido, toca la pantalla cuando estés listo para ordenar");
-                _tts.setCompletionHandler(() {
-                  _tts.stop();
-                });
-              } else {
-                _processCommand(_command);
-              }
+          localeId: 'es_MX', // Idioma español
+          onResult: (result) {
+            setState(() {
+              _command = result.recognizedWords;
             });
+
+            if (_command.contains("cancelar") ||
+                _command.contains("salir") ||
+                _command.contains("cerrar")) {
+              _speech.stop();
+              _tts.speak(
+                  "Entendido, toca la pantalla cuando estés listo para ordenar");
+              _tts.setCompletionHandler(() {
+                _tts.stop();
+              });
+            } else {
+              _processCommand(_command);
+            }
+          },
+        );
       }
     }
   }
 
   Future<void> _startConfirmationListening(
-      Map<String, dynamic> ordenFinal) async {
+      Map<String, dynamic> ordenFinal, List<int> precioOrden) async {
     if (!_isListening) {
       bool available = await _speech.initialize();
       if (available) {
@@ -134,10 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
             setState(
               () {
                 _command = result.recognizedWords;
-                _processConfirmationCommand(
-                  _command,
-                  ordenFinal,
-                );
+                _processConfirmationCommand(_command, ordenFinal, precioOrden);
               },
             );
           },
@@ -222,41 +225,34 @@ class _HomeScreenState extends State<HomeScreen> {
         mode: FileMode.write);
 
     // Mostrar la orden agregada (o hacer algo más con ella)
-    print(detallesOrden);
   }
 
   void _processConfirmationCommand(
-      String command, Map<String, dynamic> ordenFinal) {
+      String command, Map<String, dynamic> ordenFinal, List<int> precioOrden) {
     if (command.contains("sí") || command.contains("correcto")) {
-      _tts.speak("¡Pedido confirmado! ¡Buen Provecho!");
+      if (_speech.isNotListening) {
+        _tts.speak(
+            "¡Pedido confirmado! Vaya a su carrito para realizar su orden");
+        _tts.setCompletionHandler(() {
+          _tts.stop();
+        });
+      }
 
       _tts.setCompletionHandler(() async {
         _tts.stop();
-        /* enviarCorreo(
-          nombre: "Encargados de Cocina",
-          email: "cocina@example.com",
-          mensaje: """
-          ¡Hola equipo de cocina!
-
-          Han recibido una nueva orden para preparar. A continuación, los detalles:
-
-          Detalles de la Orden:
-          ${elementosOrden.join("\n- ")}
-
-          Total de la Orden: $totalOrden MXN
-
-          Por favor, preparen esta orden lo más pronto posible y confirmen cuando esté lista.
-
-          Gracias por su dedicación.
-
-          Saludos,
-          ChipiBot
-          """,
-        ); */
+        setState(() {
+          ordenFinalGlobal = ordenFinal;
+          precioOrdenGlobal = precioOrden;
+        });
         _addOrderToCart(ordenFinal);
       });
     } else if (command.contains("no") || command.contains("incorrecto")) {
-      _tts.speak("¡Pedido cancelado! Inténtalo de nuevo.");
+      if (_speech.isNotListening) {
+        _tts.speak("¡Pedido cancelado! Inténtalo de nuevo.");
+        _tts.setCompletionHandler(() {
+          _tts.stop();
+        });
+      }
     }
   }
 
@@ -291,6 +287,11 @@ class _HomeScreenState extends State<HomeScreen> {
     List<Map<String, dynamic>> platillosSeleccionados = [];
     List<Map<String, dynamic>> bebidasSeleccionadas = [];
     List<Map<String, dynamic>> postresSeleccionados = [];
+    Map<String, dynamic> ordenFinal = {
+      "platillos": [],
+      "bebidas": [],
+      "postres": [],
+    };
 
     // Buscar en cada categoría
     if (menu['platillos'] != null) {
@@ -526,7 +527,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       // JSON Final
-      Map<String, dynamic> ordenFinal = {
+      ordenFinal = {
         "platillos": platillosSeleccionados,
         "bebidas": bebidasSeleccionadas,
         "postres": postresSeleccionados,
@@ -535,13 +536,12 @@ class _HomeScreenState extends State<HomeScreen> {
       // Construir el mensaje final de confirmación
       String mensajeConfirmacion =
           "¿Es correcto el pedido de ${elementosConfirmacion.join(", ")}?. De ser así, el precio sería de ${precioOrden.fold(0, (a, b) => a + b)} pesos. ¿Desea confirmar su pedido?";
-      print(precioOrden);
-      print(ordenFinal);
-
+      print("La orden final es: $ordenFinal");
+      print("el total es: ${precioOrden.fold(0, (a, b) => a + b)}");
       if (_speech.isNotListening) {
         Timer(const Duration(seconds: 1), () async {
           await _tts.speak(mensajeConfirmacion);
-          _setupTTS(ordenFinal);
+          _setupTTS(ordenFinal, precioOrden);
         });
       }
     });
@@ -554,13 +554,9 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () async {
           _bluetoothManager.sendData("1");
           _tts.speak("¡Hola! ¡Bienvenido! ¿Quiere ordenar algo?");
-          _tts.setCompletionHandler(
-            () {
-              Timer(const Duration(seconds: 1), () {
-                _startListening();
-              });
-            },
-          );
+          _tts.setCompletionHandler(() {
+            _startListening();
+          });
         },
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -656,7 +652,6 @@ class _HomeScreenState extends State<HomeScreen> {
     Future<Map<String, dynamic>> cargarJson(BuildContext context) async {
       final String response = await DefaultAssetBundle.of(context)
           .loadString('assets/recipes.json');
-
       return jsonDecode(response);
     }
 
@@ -693,42 +688,68 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               content: SizedBox(
                 width: double.maxFinite,
-                height: 300, // Altura ajustada para que sea scrollable
+                height: 300,
                 child: ListView.builder(
                   itemCount: platillos.length,
                   itemBuilder: (context, index) {
                     final platillo = platillos[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(9999),
-                            child: Image.asset(
-                              platillo['imagen'],
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
+                    return GestureDetector(
+                      onTap: () {
+                        // Crear una orden con el elemento seleccionado
+                        Map<String, dynamic> ordenSeleccionada = {
+                          "platillos": [
+                            {
+                              "nombre": platillo['nombre'],
+                            }
+                          ],
+                          "bebidas": [],
+                          "postres": [],
+                        };
+                        setState(() {
+                          precioOrdenGlobal.add(platillo['precio']);
+                          ordenFinalGlobal["platillos"].add({
+                            "nombre": platillo['nombre'],
+                          });
+                        });
+
+                        // Llamar a _addOrderToCart
+                        _addOrderToCart(ordenSeleccionada);
+
+                        // Cerrar el diálogo
+                        Navigator.pop(context);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(9999),
+                              child: Image.asset(
+                                platillo['imagen'],
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              platillo['nombre'],
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                platillo['nombre'],
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              "\$${platillo['precio']}",
                               style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
                               ),
                             ),
-                          ),
-                          Text(
-                            "\$${platillo['precio']}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -781,42 +802,68 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               content: SizedBox(
                 width: double.maxFinite,
-                height: 300, // Altura ajustada para que sea scrollable
+                height: 300,
                 child: ListView.builder(
                   itemCount: bebidas.length,
                   itemBuilder: (context, index) {
                     final bebida = bebidas[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(9999),
-                            child: Image.asset(
-                              bebida['imagen'],
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
+                    return GestureDetector(
+                      onTap: () {
+                        // Crear una orden con la bebida seleccionada
+                        Map<String, dynamic> ordenSeleccionada = {
+                          "platillos": [],
+                          "bebidas": [
+                            {
+                              "nombre": bebida['nombre'],
+                            }
+                          ],
+                          "postres": [],
+                        };
+                        setState(() {
+                          precioOrdenGlobal.add(bebida['precio']);
+                          ordenFinalGlobal["bebidas"].add({
+                            "nombre": bebida['nombre'],
+                          });
+                        });
+
+                        // Llamar a _addOrderToCart
+                        _addOrderToCart(ordenSeleccionada);
+
+                        // Cerrar el diálogo
+                        Navigator.pop(context);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(9999),
+                              child: Image.asset(
+                                bebida['imagen'],
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              bebida['nombre'],
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                bebida['nombre'],
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              "\$${bebida['precio']}",
                               style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
                               ),
                             ),
-                          ),
-                          Text(
-                            "\$${bebida['precio']}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -869,58 +916,73 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               content: SizedBox(
                 width: double.maxFinite,
-                height: 300, // Altura ajustada para que sea scrollable
+                height: 300,
                 child: ListView.builder(
                   itemCount: postres.length,
                   itemBuilder: (context, index) {
                     final postre = postres[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(9999),
-                            child: Image.asset(
-                              postre['imagen'],
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
+                    return GestureDetector(
+                      onTap: () {
+                        // Crear una orden con el postre seleccionado
+                        Map<String, dynamic> ordenSeleccionada = {
+                          "platillos": [],
+                          "bebidas": [],
+                          "postres": [
+                            {
+                              "nombre": postre['nombre'],
+                            }
+                          ],
+                        };
+                        setState(() {
+                          precioOrdenGlobal.add(postre['precio']);
+                          ordenFinalGlobal["postres"].add({
+                            "nombre": postre['nombre'],
+                          });
+                        });
+
+                        // Llamar a _addOrderToCart
+                        _addOrderToCart(ordenSeleccionada);
+
+                        // Cerrar el diálogo
+                        Navigator.pop(context);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(9999),
+                              child: Image.asset(
+                                postre['imagen'],
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              postre['nombre'],
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                postre['nombre'],
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              "\$${postre['precio']}",
                               style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
                               ),
                             ),
-                          ),
-                          Text(
-                            "\$${postre['precio']}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   },
                 ),
               ),
-              /* actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text(
-                    "Cerrar",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ], */
             );
           },
         );
@@ -943,6 +1005,117 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         // Si no existe, retornar una lista vacía
         return [];
+      }
+    }
+
+    // Función para vaciar el archivo de órdenes
+    Future<void> vaciarOrdenes() async {
+      final totalOrden = precioOrdenGlobal.fold(0, (a, b) => a + b);
+      // Lista para construir la salida
+      List<String> resultadoFinal = [];
+
+      // Procesar platillos
+      if (ordenFinalGlobal["platillos"] != null) {
+        resultadoFinal.add("Platillos:");
+        for (var platillo in ordenFinalGlobal["platillos"]) {
+          String detalle = "   ${platillo["nombre"]}";
+          if (platillo.containsKey("tipo")) {
+            detalle += "\n    Tipo: ${platillo["tipo"]}";
+          }
+
+          if (platillo.containsKey("salsa")) {
+            detalle += "\n    Salsa: ${platillo["salsa"]}";
+          }
+
+          if (platillo.containsKey("proteína")) {
+            detalle += "\n    Proteína: ${platillo["proteína"]}";
+          }
+
+          if (platillo.containsKey("complementos_incluidos")) {
+            detalle +=
+                "\n    Con: ${platillo["complementos_incluidos"].join(", ")}";
+          }
+          if (platillo.containsKey("complementos_excluidos")) {
+            detalle +=
+                "\n    Sin: ${platillo["complementos_excluidos"].join(", ")}";
+          }
+          resultadoFinal.add(detalle);
+        }
+      }
+
+      // Procesar bebidas
+      if (ordenFinalGlobal["bebidas"] != null) {
+        resultadoFinal.add("Bebidas:");
+        for (var bebida in ordenFinalGlobal["bebidas"]) {
+          String detalle = "  -${bebida["nombre"]}";
+          if (bebida.containsKey("tipo")) {
+            detalle += "\n    Tipo: ${bebida["tipo"]}";
+          }
+
+          if (bebida.containsKey("tamaño")) {
+            detalle += "\n    Tamaño: ${bebida["tamaño"]}";
+          }
+
+          if (bebida.containsKey("complementos_incluidos")) {
+            detalle +=
+                "\n    Con: ${bebida["complementos_incluidos"].join(", ")}";
+          }
+          if (bebida.containsKey("complementos_excluidos")) {
+            detalle +=
+                "\n    Sin: ${bebida["complementos_excluidos"].join(", ")}";
+          }
+          resultadoFinal.add(detalle);
+        }
+      }
+
+      // Procesar postres
+      if (ordenFinalGlobal["postres"] != null) {
+        resultadoFinal.add("Postres:");
+        for (var postre in ordenFinalGlobal["postres"]) {
+          String detalle = "   ${postre["nombre"]}";
+          if (postre.containsKey("toppings")) {
+            detalle += "\n    Toppings: ${postre["toppings"].join(", ")}";
+          }
+          resultadoFinal.add(detalle);
+        }
+      }
+
+      enviarCorreo(
+        nombre: "Encargados de Cocina",
+        email: "cocina@example.com",
+        mensaje: """
+          ¡Hola equipo de cocina!
+
+          Han recibido una nueva orden para preparar. A continuación, los detalles:
+
+          Detalles de la Orden:
+          ${resultadoFinal.join("\n- ")}
+
+          Total de la Orden: $totalOrden MXN
+
+          Por favor, preparen esta orden lo más pronto posible y confirmen cuando esté lista.
+
+          Gracias por su dedicación.
+
+          Saludos,
+          ChipiBot
+          """,
+      );
+      final Directory? directory = await getDownloadsDirectory();
+      final filePath = '${directory!.path}/ordenes.json';
+      final file = File(filePath);
+
+      // Sobrescribir el archivo con una lista vacía
+      if (await file.exists()) {
+        await file.writeAsString(json.encode([]));
+        setState(() {
+          ordenFinalGlobal = {
+            "platillos": [],
+            "bebidas": [],
+            "postres": [],
+          };
+          precioOrdenGlobal = [];
+        });
       }
     }
 
@@ -974,7 +1147,7 @@ class _HomeScreenState extends State<HomeScreen> {
             final ordenes = snapshot.data!;
 
             return AlertDialog(
-              backgroundColor: ColorConstants.pinkColor,
+              backgroundColor: ColorConstants.greenColor,
               title: const Text(
                 "Carrito de Compras",
                 style: TextStyle(color: Colors.white),
@@ -993,53 +1166,69 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Fecha: ${orden['fecha']}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
                           const SizedBox(height: 10),
                           // Listar los detalles de la orden
-                          ...detalles.map((detalle) {
-                            return Row(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(9999),
-                                  child: Image.asset(
-                                    detalle['imagen'],
-                                    width: 50,
-                                    height: 50,
-                                    fit: BoxFit.cover,
+                          ...detalles.map(
+                            (detalle) {
+                              return Row(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(9999),
+                                    child: Image.asset(
+                                      detalle['imagen'],
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    detalle['nombre'],
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      detalle['nombre'],
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    "\$${detalle['precio']}",
                                     style: const TextStyle(
                                       fontSize: 16,
                                       color: Colors.white,
                                     ),
                                   ),
-                                ),
-                                Text(
-                                  "\$${detalle['precio']}",
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }).toList(),
+                                ],
+                              );
+                            },
+                          ),
                         ],
                       ),
                     );
                   },
                 ),
               ),
+              actions: [
+                // Botón Pagar
+                TextButton(
+                  onPressed: () async {
+                    // Vaciar el archivo de órdenes
+                    await vaciarOrdenes();
+                    // Cerrar el diálogo
+                    Navigator.of(context).pop();
+                    // Mostrar un mensaje de confirmación (opcional)
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Orden enviada a cocina exitosamente."),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Confirmar Orden",
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                ),
+              ],
             );
           },
         );
